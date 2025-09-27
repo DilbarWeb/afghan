@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="pr" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>افغاني ټریډر - USDT چارج</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+    <style>
+        :root {
+            --green: #006341;
+            --red: #CE1126;
+            --black: #000000;
+            --gold: #D3A329;
+            --light-gray: #f8f9fa;
+            --dark-gray: #6c757d;
+            --blue: #1a5fb4;
+            --trc20: #009393;
+            --bep20: #f0b90b;
+            --erc20: #2775ca;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--black);
+        }
+        
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(90deg, var(--green) 0%, var(--black) 50%, var(--red) 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 3px solid var(--gold);
+        }
+        
+        .app-logo {
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .back-btn {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        } 
+        
+        .content {
+            padding: 20px;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: var(--green);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .network-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .network-option {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .network-option:hover, .network-option.selected {
+            border-color: var(--green);
+            background-color: rgba(0, 99, 65, 0.1);
+        }
+        
+        .network-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        
+        .trc20 {
+            color: var(--trc20);
+        }
+        
+        .bep20 {
+            color: var(--bep20);
+        }
+        
+        .erc20 {
+            color: var(--erc20);
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(to right, var(--green), #004d33);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .address-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1001;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .address-content {
+            background: white;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+            font-weight: 600;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        .notification.success {
+            background: var(--green);
+            color: white;
+        }
+        
+        .notification.error {
+            background: var(--red);
+            color: white;
+        }
+        
+        .address-info {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        #address-text {
+            font-size: 14px;
+            word-break: break-all;
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .qr-code-container {
+            margin: 0 auto;
+            width: 200px;
+            height: 200px;
+            background: white;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        #address-network {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        #address-note {
+            font-size: 14px;
+            color: var(--dark-gray);
+        }
+        
+        .copy-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--blue);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .close-modal {
+            background: var(--red);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .request-status {
+            padding: 15px;
+            border-radius: 10px;
+            background-color: #f8f9fa;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+        
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-assigned {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @media (max-width: 600px) {
+            .network-options {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <button class="back-btn" id="back-btn">
+                <i class="fas fa-arrow-left"></i>
+                <span id="back-text">بیرته</span>
+            </button>
+            <div class="app-logo">
+                <i class="fas fa-money-bill-wave"></i>
+                <span id="page-title">USDT چارج</span>
+                <span class="Afghani Trade-badge">Afghani Trade</span>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div id="request-status-container" class="request-status">
+                <i class="fas fa-info-circle"></i>
+                <span id="request-status-text"></span>
+            </div>
+            
+            <div class="section-title">
+                <i class="fas fa-network-wired"></i>
+                <span id="network-label">شبکه انتخاب کړئ</span>
+            </div>
+            
+            <div class="network-options" id="network-options">
+                <div class="network-option" data-network="trc20">
+                    <div class="network-icon trc20">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <div class="network-name">TRC20</div>
+                    <div class="network-fee">USDT</div>
+                </div>
+                <div class="network-option" data-network="bep20">
+                    <div class="network-icon bep20">
+                        <i class="fab fa-btc"></i>
+                    </div>
+                    <div class="network-name">BEP20</div>
+                    <div class="network-fee">USDT</div>
+                </div>
+                <div class="network-option" data-network="erc20">
+                    <div class="network-icon erc20">
+                        <i class="fab fa-ethereum"></i>
+                    </div>
+                    <div class="network-name">ERC20</div>
+                    <div class="network-fee">USDT</div>
+                </div>
+            </div>
+            
+            <button class="submit-btn" id="submit-btn">
+                <i class="fas fa-paper-plane"></i>
+                <span id="submit-text">ادرس غوښتنه</span>
+            </button>
+            
+            <div class="section-title">
+                <i class="fas fa-info-circle"></i>
+                <span id="info-label">معلومات</span>
+            </div>
+            
+            <div class="form-group">
+                <p id="minimum-amount">لږترلږه چارج اندازه: 5 USDT</p>
+                <p id="processing-time">د چارج وخت: 5-30 دقیقې</p>
+                <p id="address-note-info">د چارج آدرس به د اډمین له خوا وټاکل شي او تاسو ته وښودل شي</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="address-modal" id="address-modal">
+        <div class="address-content">
+            <h3 id="address-title">د USDT د چارج آدرس</h3>
+            <div class="address-info">
+                <p id="address-text"></p>
+                <div class="qr-code-container" id="qr-code-container"></div>
+                <p id="address-network"></p>
+                <p id="address-note">مهرباني وکړئ دقیقه آدرس کاپي کړئ او په خپل والټ کې ولېږئ</p>
+            </div>
+            <button class="copy-btn" id="copy-btn">
+                <i class="fas fa-copy"></i>
+                <span>آدرس کاپي کړئ</span>
+            </button>
+            <button class="close-modal" id="close-address-modal">بندول</button>
+        </div>
+    </div>
+
+    <script>
+        // د Firebase کانفیګوریشن
+        const firebaseConfig = {
+            apiKey: "AIzaSyD4UbW_Iy4kUWH3V70Q1mWCI4-_KFk6ku4",
+            authDomain: "onlinewark-a0147.firebaseapp.com",
+            databaseURL: "https://onlinewark-a0147-default-rtdb.firebaseio.com",
+            projectId: "onlinewark-a0147",
+            storageBucket: "onlinewark-a0147.appspot.com",
+            messagingSenderId: "92155538620",
+            appId: "1:92155538620:android:5e198a8eea6bf17f61f4b9",
+            measurementId: "G-6SNJR535G5"
+        };
+
+        // د Firebase انیشیالایز کول
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+const translations = {
+            'en': {
+                'page_title': 'USDT Deposit',
+                'back': 'Back',
+                'network': 'Select Network',
+                'submit': 'Request Address',
+                'close': 'Close',
+                'minimum_amount': 'Minimum deposit: 5 USDT',
+                'processing_time': 'Processing time: 5-30 minutes',
+                'address_note_info': 'Deposit address will be assigned by admin and shown to you',
+                'network_required': 'Please select network',
+                'request_processing': 'Processing your request...',
+                'request_success': 'Address request submitted successfully',
+                'request_failed': 'Request failed, please try again',
+                'address_copied': 'Address copied successfully',
+                'address_title': 'USDT Deposit Address',
+                'info_label': 'Information',
+                'request_submitted': 'Address request submitted. Admin will assign you an address soon.',
+                'check_status': 'Check your deposit status in transaction history',
+                'status_pending': 'Waiting for admin to assign address',
+                'status_assigned': 'Address assigned by admin',
+                'already_requested': 'You already have a pending request for this network',
+                'address_available': 'You already have an assigned address for this network'
+            },
+            'ps': {
+                'page_title': 'USDT چارج',
+                'back': 'بیرته',
+                'network': 'شبکه انتخاب کړئ',
+                'submit': 'ادرس غوښتنه',
+                'close': 'بندول',
+                'minimum_amount': 'لږترلږه چارج اندازه: 5 USDT',
+                'processing_time': 'د چارج وخت: 5-30 دقیقې',
+                'address_note_info': 'د چارج آدرس به د اډمین له خوا وټاکل شي او تاسو ته وښودل شي',
+                'network_required': 'مهرباني وکړئ شبکه وټاکئ',
+                'request_processing': 'ستاسو غوښتنه پروسس کیږي...',
+                'request_success': 'د آدرس غوښتنه په بریالیتوب سره وسپارل شوه',
+                'request_failed': 'غوښتنه ناکامه شوه، مهرباني وکړئ بیا هڅه وکړئ',
+                'address_copied': 'آدرس په بریالیتوب سره کاپي شو',
+                'address_title': 'د USDT د چارج آدرس',
+                'info_label': 'معلومات',
+                'request_submitted': 'د آدرس غوښتنه وسپارل شوه. اډمین به تاسو ته ژر آدرس وټاکي.',
+                'check_status': 'د چارج حالت په معاملاتو کی وګورئ',
+                'status_pending': 'د اډمین په انتظار آدرس ټاکلو لپاره',
+                'status_assigned': 'آدرس د اډمین لخوا ټاکل شوی',
+                'already_requested': 'تاسو دمخه د دې شبکې لپاره یو پاتې غوښتنه لرئ',
+                'address_available': 'تاسو دمخه د دې شبکې لپاره ټاکل شوی آدرس لرئ'
+            },
+            'pr': {
+                'page_title': 'شارژ USDT',
+                'back': 'بازگشت',
+                'network': 'شبکه را انتخاب کنید',
+                'submit': 'درخواست آدرس',
+                'close': 'بستن',
+                'minimum_amount': 'حداقل واریز: 5 USDT',
+                'processing_time': 'زمان پردازش: 5-30 دقیقه',
+                'address_note_info': 'آدرس واریز توسط ادمین انتخاب شده و به شما نمایش داده خواهد شد',
+                'network_required': 'لطفاً شبکه را انتخاب کنید',
+                'request_processing': 'در حال پردازش درخواست شما...',
+                'request_success': 'درخواست آدرس با موفقیت ثبت شد',
+                'request_failed': 'درخواست ناموفق بود، لطفاً مجدداً تلاش کنید',
+                'address_copied': 'آدرس با موفقیت کپی شد',
+                'address_title': 'آدرس واریز USDT',
+                'info_label': 'اطلاعات',
+                'request_submitted': 'درخواست آدرس ثبت شد. ادمین به زودی آدرس را برای شما انتخاب خواهد کرد.',
+                'check_status': 'وضعیت واریز خود را در تاریخچه تراکنش ها بررسی کنید',
+                'status_pending': 'در انتظار انتخاب آدرس توسط ادمین',
+                'status_assigned': 'آدرس توسط ادمین انتخاب شده است',
+                'already_requested': 'شما قبلاً یک درخواست در حال انتظار برای این شبکه دارید',
+                'address_available': 'شما قبلاً یک آدرس اختصاص داده شده برای این شبکه دارید'
+            }
+        };
+        // د DOM عناصر
+        const domElements = {
+            backBtn: document.getElementById('back-btn'),
+            backText: document.getElementById('back-text'),
+            pageTitle: document.getElementById('page-title'),
+            networkLabel: document.getElementById('network-label'),
+            networkOptions: document.getElementById('network-options'),
+            submitBtn: document.getElementById('submit-btn'),
+            submitText: document.getElementById('submit-text'),
+            infoLabel: document.getElementById('info-label'),
+            minimumAmount: document.getElementById('minimum-amount'),
+            processingTime: document.getElementById('processing-time'),
+            addressNoteInfo: document.getElementById('address-note-info'),
+            addressModal: document.getElementById('address-modal'),
+            addressTitle: document.getElementById('address-title'),
+            addressText: document.getElementById('address-text'),
+            addressNetwork: document.getElementById('address-network'),
+            qrCodeContainer: document.getElementById('qr-code-container'),
+            copyBtn: document.getElementById('copy-btn'),
+            closeAddressModal: document.getElementById('close-address-modal'),
+            requestStatusContainer: document.getElementById('request-status-container'),
+            requestStatusText: document.getElementById('request-status-text')
+        };
+
+        // د ژبې تطبیق کول
+        function applyTranslations(lang) {
+            const translation = translations[lang] || translations['ps'];
+            
+            domElements.backText.textContent = translation['back'];
+            domElements.pageTitle.textContent = translation['page_title'];
+            domElements.networkLabel.textContent = translation['network'];
+            domElements.submitText.textContent = translation['submit'];
+            domElements.closeAddressModal.textContent = translation['close'];
+            domElements.minimumAmount.textContent = translation['minimum_amount'];
+            domElements.processingTime.textContent = translation['processing_time'];
+            domElements.infoLabel.textContent = translation['info_label'];
+            domElements.addressTitle.textContent = translation['address_title'];
+            domElements.addressNoteInfo.textContent = translation['address_note_info'];
+        }
+
+        // د اعالمیې ښکاره کول
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // د بېرته تګ بټن
+        domElements.backBtn.addEventListener('click', () => {
+            window.location.href = 'dashboard.html';
+        });
+
+        // د شبکه اختیارونو فعالیت
+        domElements.networkOptions.querySelectorAll('.network-option').forEach(option => {
+            option.addEventListener('click', () => {
+                domElements.networkOptions.querySelectorAll('.network-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                option.classList.add('selected');
+            });
+        });
+
+        // د آدرس مودال ښکاره کول
+        function showAddressModal(address, network) {
+            const lang = localStorage.getItem('userLanguage') || 'ps';
+            const translation = translations[lang] || translations['ps'];
+            
+            // د آدرس ښکاره کول
+            domElements.addressText.textContent = address;
+            domElements.addressNetwork.textContent = `شبکه: ${network.toUpperCase()}`;
+            
+            // د QR کوډ جنریټ کول
+            domElements.qrCodeContainer.innerHTML = '';
+            
+            let qrText = address;
+            if (network === 'trc20') {
+                qrText = `tron:${address}`;
+            } else if (network === 'erc20') {
+                qrText = `ethereum:${address}`;
+            } else if (network === 'bep20') {
+                qrText = `binance:${address}`;
+            }
+            
+            new QRCode(domElements.qrCodeContainer, {
+                text: qrText,
+                width: 180,
+                height: 180,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            
+            // د مودال ښکاره کول
+            domElements.addressModal.style.display = 'flex';
+        }
+
+        // د آدرس کاپي کول
+        domElements.copyBtn.addEventListener('click', () => {
+            const address = domElements.addressText.textContent;
+            navigator.clipboard.writeText(address).then(() => {
+                const lang = localStorage.getItem('userLanguage') || 'ps';
+                showNotification(translations[lang]['address_copied']);
+            }).catch(err => {
+                console.error('د کاپي کولو ستونزه:', err);
+                const textArea = document.createElement('textarea');
+                textArea.value = address;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                const lang = localStorage.getItem('userLanguage') || 'ps';
+                showNotification(translations[lang]['address_copied']);
+            });
+        });
+
+        // د آدرس مودال بندول
+        domElements.closeAddressModal.addEventListener('click', () => {
+            domElements.addressModal.style.display = 'none';
+        });
+
+        // د حالت ښکاره کول
+        function showRequestStatus(status, network) {
+            const lang = localStorage.getItem('userLanguage') || 'ps';
+            const translation = translations[lang] || translations['ps'];
+            
+            domElements.requestStatusContainer.style.display = 'block';
+            
+            if (status === 'pending') {
+                domElements.requestStatusContainer.className = 'request-status status-pending';
+                domElements.requestStatusText.innerHTML = `
+                    <i class="fas fa-clock"></i>
+                    ${translation['status_pending']} (${network.toUpperCase()})
+                `;
+            } else if (status === 'assigned') {
+                domElements.requestStatusContainer.className = 'request-status status-assigned';
+                domElements.requestStatusText.innerHTML = `
+                    <i class="fas fa-check-circle"></i>
+                    ${translation['status_assigned']} (${network.toUpperCase()})
+                `;
+            }
+        }
+
+        // د موجودې غوښتنې څارنه
+        async function checkExistingRequest(userId, network) {
+            const snapshot = await database.ref('addressRequests')
+                .orderByChild('userId')
+                .equalTo(userId)
+                .once('value');
+            
+            if (snapshot.exists()) {
+                const requests = snapshot.val();
+                for (const requestId in requests) {
+                    const request = requests[requestId];
+                    if (request.network === network) {
+                        return request;
+                    }
+                }
+            }
+            return null;
+        }
+
+        // د آدرس غوښتنه
+        domElements.submitBtn.addEventListener('click', async () => {
+            const lang = localStorage.getItem('userLanguage') || 'ps';
+            const translation = translations[lang] || translations['ps'];
+            const network = document.querySelector('.network-option.selected')?.getAttribute('data-network');
+            const user = auth.currentUser;
+            
+            if (!network) {
+                showNotification(translation['network_required'], 'error');
+                return;
+            }
+            
+            if (user) {
+                showNotification(translation['request_processing']);
+                
+                try {
+                    const existingRequest = await checkExistingRequest(user.uid, network);
+                    
+                    if (existingRequest) {
+                        if (existingRequest.status === 'assigned' || existingRequest.status === 'completed') {
+                            showAddressModal(existingRequest.address, network);
+                            showRequestStatus('assigned', network);
+                            showNotification(translation['address_available']);
+                            return;
+                        } else {
+                            showNotification(translation['already_requested'], 'error');
+                            return;
+                        }
+                    }
+                    
+                    const requestRef = database.ref('addressRequests').push();
+                    const requestId = requestRef.key;
+                    
+                    const requestData = {
+                      
+                        userId: user.uid,
+                        email: user.email,
+                        network: network,
+                        status: 'pending',
+                        address: '', // Will be set by admin
+                        timestamp: firebase.database.ServerValue.TIMESTAMP,
+                        requestId: requestId
+                        
+                    };
+                    
+                    await requestRef.set(requestData);
+                    
+                    showNotification(translation['request_success']);
+                    showRequestStatus('pending', network);
+                    
+                    // د اډمین لخوا د آدرس ټاکلو لپاره څارنه
+                    monitorRequestStatus(requestId, network);
+                } catch (error) {
+                    console.error('Afghani Trade Error:', error);
+                    showNotification(translation['request_failed'], 'error');
+                }
+            }
+        });
+
+        // د غوښتنې حالت څارنه
+        function monitorRequestStatus(requestId, network) {
+            const requestRef = database.ref(`addressRequests/${requestId}`);
+            
+            requestRef.on('value', (snapshot) => {
+                const request = snapshot.val();
+                
+                if (request && (request.status === 'assigned' || request.status === 'completed') && request.address) {
+                    requestRef.off();
+                    showAddressModal(request.address, network);
+                    showRequestStatus('assigned', network);
+                }
+            });
+        }
+
+        // د کاروونکي د آدرسونو څارنه
+        function checkUserAssignedAddresses(userId) {
+            const addressesRef = database.ref('addressRequests').orderByChild('userId').equalTo(userId);
+            
+            addressesRef.on('value', (snapshot) => {
+                const requests = snapshot.val();
+                
+                if (requests) {
+                    Object.keys(requests).forEach(requestId => {
+                        const request = requests[requestId];
+                        
+                        if (request.status === 'assigned' || request.status === 'completed') {
+                            showAddressModal(request.address, request.network);
+                            showRequestStatus('assigned', request.network);
+                        } else if (request.status === 'pending') {
+                            showRequestStatus('pending', request.network);
+                            monitorRequestStatus(requestId, request.network);
+                        }
+                    });
+                }
+            });
+        }
+
+        // د ذخیره شوې ژبې تطبیق کول
+        const savedLanguage = localStorage.getItem('userLanguage') || 'ps';
+        applyTranslations(savedLanguage);
+        
+        // د Firebase د اتینټیکیشن حالت څارنه
+        auth.onAuthStateChanged(user => {
+            if (!user) {
+                window.location.href = 'index.html';
+            } else {
+                // د کاروونکي د آدرسونو څارنه پیل کړئ
+                checkUserAssignedAddresses(user.uid);
+            }
+        });
+    </script>
+</body>
+</html>
